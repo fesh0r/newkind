@@ -38,6 +38,8 @@ static unsigned char landscape[LAND_X_MAX+1][LAND_Y_MAX+1];
 
 static struct point point_list[100];
 
+#ifdef HACKING
+
 static void identify_ship(struct univ_object *univ)
 {
   char buf[64];
@@ -45,18 +47,13 @@ static void identify_ship(struct univ_object *univ)
 
   lasv = ship_list[univ->type]->front_laser;
   if (!(univ->flags & FLG_TACTICAL)) {
-#ifdef HACKING
     unsigned flags = univ->flags;
     sprintf(buf, "%s %s%s%s%s", ship_list[univ->type]->name,
 	    (flags & FLG_ANGRY) ? "A" : "",
 	    (flags & FLG_TARGET) ? "T" : "",
 	    (flags & FLG_HOSTILE) ? "H" : "",
 	    (flags & FLG_POLICE) ? "P" : "");
-#else
-    sprintf(buf, "%s", ship_list[univ->type]->name);
-#endif
   } else {
-#ifdef HACKING
     unsigned flags = univ->flags;
     sprintf(buf, "%s (%d) %s%s%s%s", ship_list[univ->type]->name,
 	    univ->energy,
@@ -64,12 +61,11 @@ static void identify_ship(struct univ_object *univ)
 	    (flags & FLG_TARGET) ? "T" : "",
 	    (flags & FLG_HOSTILE) ? "H" : "",
 	    (flags & FLG_POLICE) ? "P" : "");
-#else
-    sprintf(buf, "%s (%d)", ship_list[univ->type]->name, univ->energy);
-#endif
   }
   gfx_display_text(point_list[lasv].x + 4, point_list[lasv].y + 4, buf);
 }
+
+#endif
 
 /*
  * The following routine is used to draw a wireframe represtation of a ship.
@@ -187,8 +183,10 @@ void draw_wireframe_ship (struct univ_object *univ)
 					   univ->location.x > 0 ? 0 : 511, rand255() * 2);
 	}
 
+#ifdef HACKING
 	if (identify)
 	  identify_ship(univ);
+#endif
 }
 
 
@@ -380,8 +378,10 @@ void draw_solid_ship (struct univ_object *univ)
 	}
 #endif
 
+#ifdef HACKING
 	if (identify)
 	  identify_ship(univ);
+#endif
 }
 
 

@@ -18,6 +18,7 @@
  * Special Weapons And Tactics.
  */
 
+#include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -355,7 +356,8 @@ void explode_object (int un)
 void check_target (int un, struct univ_object *flip)
 {
 	struct univ_object *univ;
-	
+	char buf[80];
+
 	univ = &universe[un];
 	
 	if (in_target (univ->type, flip->location.x, flip->location.y, flip->location.z))
@@ -363,7 +365,9 @@ void check_target (int un, struct univ_object *flip)
 		if ((missile_target == MISSILE_ARMED) && (univ->type >= 0))
 		{
 			missile_target = un;
-			info_message ("Target Locked");
+			sprintf(buf, "Target Locked (%s)",
+				ship_list[univ->type]->name);
+			info_message (buf);
 			snd_play_sample (SND_BEEP);
 		}
 	

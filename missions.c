@@ -202,7 +202,9 @@ void constrictor_mission_brief (void)
 	flight_roll = 0;
 	flight_climb = 0;
 	flight_speed = 0;
+#ifdef HACKING
 	identify = 0;
+#endif
 
 	do
 	{

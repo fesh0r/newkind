@@ -168,7 +168,9 @@ extern int mcount;
 extern int detonate_bomb;
 extern int witchspace;
 extern int auto_pilot;
+#ifdef HACKING
 extern int identify;
+#endif
 extern int remap_keys;
 extern int scanner_zoom;
 

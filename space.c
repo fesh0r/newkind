@@ -1310,7 +1310,9 @@ void launch_player (void)
 	generate_landscape(docked_planet.a * 251 + docked_planet.b);
 	set_init_matrix (rotmat);
 	add_new_ship (SHIP_PLANET, 0, 0, 65536, rotmat, 0, 0);
+#ifdef HACKING
 	identify = 0;
+#endif
 	scanner_zoom = 1;
 
 	rotmat[2].x = -rotmat[2].x;

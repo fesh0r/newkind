@@ -63,7 +63,9 @@ int rolling;
 int climbing;
 int game_paused;
 int have_joystick;
+#ifdef HACKING
 int identify;
+#endif
 int scanner_zoom = 1;
 int remap_keys;
 
@@ -966,8 +968,10 @@ void handle_flight_keys (void)
 	if (kbd_n_pressed)
 		n_pressed();
 
+#ifdef HACKING
 	if (kbd_i_pressed == 1)
 	  identify = !identify;
+#endif
 	if (kbd_zoom_pressed == 1)
 	  scanner_zoom ^= 3;
  
@@ -1200,7 +1204,9 @@ void run_first_intro_screen (void)
 	snd_play_midi (SND_ELITE_THEME, TRUE);
 
 	initialise_intro1();
+#ifdef HACKING
 	identify = 0;
+#endif
 
 	for (;;)
 	{
@@ -1233,8 +1239,10 @@ void run_second_intro_screen (void)
 	current_screen = SCR_INTRO_TWO;
 	
 	snd_play_midi (SND_BLUE_DANUBE, TRUE);
-		
+
+#ifdef HACKING
 	identify = 0;
+#endif
 	initialise_intro2();
 
 	flight_speed = 3;
@@ -1275,7 +1283,9 @@ void run_game_over_screen()
 	flight_speed = 6;
 	flight_roll = 0;
 	flight_climb = 0;
+#ifdef HACKING
 	identify = 0;
+#endif
 	clear_universe();
 
 	set_init_matrix (rotmat);
