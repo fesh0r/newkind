@@ -40,7 +40,7 @@
 #define SCR_GAME_OVER		19
 #define SCR_SETTINGS		20
 #define SCR_ESCAPE_POD		21
-
+#define SCR_RESTART             22
 
 #define PULSE_LASER		0x0F
 #define BEAM_LASER		0x8F
@@ -169,6 +169,7 @@ extern int detonate_bomb;
 extern int witchspace;
 extern int auto_pilot;
 extern int identify;
+extern int remap_keys;
 extern int scanner_zoom;
 
 void restore_saved_commander (void);

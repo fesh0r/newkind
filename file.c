@@ -47,6 +47,7 @@ void write_config_file (void)
 	
 	fprintf (fp, "newscan.cfg\t# Name of scanner config file to use.\n");
 	fprintf (fp, "%d\t\t# Run in a window: 0 = off, 1 = on\n", prefer_window);
+	fprintf (fp, "%d\t\t# Remap keys in alternate views: 0 = off, 1 = on\n", remap_keys);
 
 	fclose (fp);
 }
@@ -161,6 +162,9 @@ void read_config_file (void)
 
 	read_cfg_line (str, sizeof(str), fp);
 	sscanf (str, "%d", &prefer_window);
+		
+	read_cfg_line (str, sizeof(str), fp);
+	sscanf (str, "%d", &remap_keys);
 		
 	fclose (fp);
 }
