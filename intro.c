@@ -27,6 +27,7 @@
 #include "config.h"
 #include "elite.h"
 #include "gfx.h"
+#include "keyboard.h"
 #include "vector.h"
 #include "shipdata.h"
 #include "shipface.h"
@@ -48,6 +49,7 @@ static int min_dist[NO_OF_SHIPS+1] = {0, 200, 800, 200,   200, 200, 300, 384,   
 
 static Matrix intro_ship_matrix;
 
+static int ship_bump;
 
 void initialise_intro1 (void)
 {
@@ -62,6 +64,7 @@ void initialise_intro2 (void)
 	ship_no = 0;
 	show_time = 0;
 	direction = 100;
+	ship_bump = +1;
 
 	clear_universe();
 	create_new_stars();
@@ -90,13 +93,42 @@ void update_intro1 (void)
 	gfx_display_centre_text (360, "Load New Commander (Y/N)?", 140, GFX_COL_GOLD);
 }
 
+static void next_ship(int bump)
+{
+  do
+  {
+    ship_no += bump;
+    if (ship_no > NO_OF_SHIPS)
+      ship_no = 1;
+    if (ship_no < 1)
+      ship_no = NO_OF_SHIPS;
+  } while (min_dist[ship_no] == 0);
+
+  show_time = 0;
+  direction = -100;
+
+  ship_count[universe[0].type] = 0;
+  universe[0].type = 0;		
+
+  add_new_ship (ship_no, 0, 0, 4500, intro_ship_matrix, -127,
+		-127);
+  ship_bump = +1;
+}
 
 void update_intro2 (void)
 {
 	show_time++;
 
-	if ((show_time >= 140) && (direction < 0))
-		direction = -direction;
+	if (direction < 0) {
+	  if (kbd_left_pressed == 1) {
+	    ship_bump = -1;
+	    direction = -direction;
+	  } else if (kbd_right_pressed == 1) {
+	    ship_bump = +1;
+	    direction = -direction;
+	  } else if (show_time >= 140)
+	    direction = -direction;
+	}
 
 	universe[0].location.z += direction;
 
@@ -104,22 +136,7 @@ void update_intro2 (void)
 		universe[0].location.z = min_dist[ship_no];
 
 	if (universe[0].location.z > 4500)
-	{
-		do
-		{
-			ship_no++;
-			if (ship_no > NO_OF_SHIPS)
-				ship_no = 1;
-		} while (min_dist[ship_no] == 0);
-
-		show_time = 0;
-		direction = -100;
-
-		ship_count[universe[0].type] = 0;
-		universe[0].type = 0;		
-
-		add_new_ship (ship_no, 0, 0, 4500, intro_ship_matrix, -127, -127);
-	}
+	  next_ship(ship_bump);
 
 
 	gfx_clear_display();
