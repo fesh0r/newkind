@@ -367,6 +367,19 @@ void draw_solid_ship (struct univ_object *univ)
 						 point_list[lasv].z, col);
 	}
 
+#if 0
+	{
+	  double cx = univ->location.x;
+	  double cy = univ->location.y;
+	  double cz = univ->location.z;
+	  if (cz <= 0) cz = 1;
+	  cx = (cx * 256) / cz + 128;
+	  cy = -(cy * 256) / cz + 96;
+	  gfx_draw_circle(cx * GFX_SCALE, cy * GFX_SCALE, sqrt(ship_list[univ->type]->size) * 256 /
+			  cz * GFX_SCALE, GFX_COL_RED);
+	}
+#endif
+
 	if (identify)
 	  identify_ship(univ);
 }
