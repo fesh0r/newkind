@@ -457,7 +457,7 @@ struct rank rating[NO_OF_RANKS] =
 	{0x0080, "Competent"},
 	{0x0200, "Dangerous"},
 	{0x0A00, "Deadly"},
-	{0x1900, "---- E L I T E ---"}
+	{0x1900, "--- E L I T E ---"}
 };
 
 char *laser_name[5] = {"Pulse", "Beam", "Military", "Mining", "Custom"};
