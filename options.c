@@ -29,8 +29,8 @@
 
 static int hilite_item;
  
-#define NUM_OPTIONS 4
-#define NUM_SETTINGS 6
+#define NUM_OPTIONS 5
+#define NUM_SETTINGS 7
 
 #define OPTION_BAR_WIDTH	(400)
 #define OPTION_BAR_HEIGHT	(15)
@@ -46,7 +46,8 @@ static struct option option_list[NUM_OPTIONS] =
 	{"Save Commander",	1},
 	{"Load Commander",	1},
 	{"Game Settings",	0},
-	{"Quit",			0}	
+	{"Restart Game",        0},
+	{"Quit",		0}	
 };
 
 struct setting
@@ -61,7 +62,8 @@ static struct setting setting_list[NUM_SETTINGS] =
 	{"Anti Alias:",		{"Off", "On", "", "", ""}},		
 	{"Planet Style:",	{"Wireframe", "Green", "SNES", "Fractal", ""}},
 	{"Planet Desc.:",	{"BBC", "MSX", "", "", ""}},
-	{"Instant Dock:",	{"Off", "On", "", "", ""}},	
+	{"Instant Dock:",	{"Off", "On", "", "", ""}},
+	{"Remap Keys:",         {"Off", "On", "", "", ""}},
 	{"Save Settings",	{"", "", "", "", ""}}
 };
 
@@ -78,7 +80,16 @@ void quit_screen (void)
 }
 
 
+void restart_screen(void)
+{
+	current_screen = SCR_RESTART;
 
+	gfx_clear_display();
+	gfx_display_centre_text (10, "GAME OPTIONS", 140, GFX_COL_GOLD);
+	gfx_draw_line (0, 36, 511, 36);
+
+	gfx_display_centre_text (175, "RESTART GAME (Y/N)?", 140, GFX_COL_GOLD);		
+}  
 
 
 void display_setting_item (int item)
@@ -114,6 +125,10 @@ void display_setting_item (int item)
 		case 4:
 			v = instant_dock;
 			break;
+
+	        case 5:
+		  v = remap_keys;
+		  break;
 
 		default:
 			v = 0;
@@ -240,6 +255,10 @@ void toggle_setting (void)
 		case 4:
 			instant_dock ^= 1;
 			break;
+
+	        case 5:
+		        remap_keys ^= 1;
+			break;
 	}
 
 	highlight_setting (hilite_item);
@@ -336,8 +355,12 @@ void do_option (void)
 		case 2:
 			game_settings_screen();
 			break;
-		
+
 		case 3:
+			restart_screen();
+			break;
+		
+		case 4:
 			quit_screen();
 			break;
 	}
