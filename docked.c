@@ -25,7 +25,7 @@
 #include "planet.h"
 #include "shipdata.h"
 #include "space.h"
-
+#include "keyboard.h"
 
 
 
@@ -497,6 +497,7 @@ static char *condition_txt[] =
 	"Docked",
 	"Green",
 	"Yellow",
+	"Red",
 	"Red"
 };
 
@@ -506,8 +507,6 @@ void display_commander_status (void)
 	char str[100];
 	int i;
 	int x,y;
-	int condition;
-	int type;
 	
 	current_screen = SCR_CMDR_STATUS;
 
@@ -536,28 +535,6 @@ void display_commander_status (void)
 	sprintf (str, "%s", planet_name);
 	gfx_display_text (190, 74, str);
 
-	if (docked)
-		condition = 0;
-	else
-	{
-		condition = 1;
-
-		for (i = 0; i < MAX_UNIV_OBJECTS; i++)
-		{
-			type = universe[i].type;
-		
-			if ((type == SHIP_MISSILE) ||
-				((type > SHIP_ROCK) && (type < SHIP_DODEC)))
-			{
-				condition = 2;
-				break;
-			}
-		}
- 
-		if ((condition == 2) && (energy < 128))
-			condition = 3;
-	}
-	
 	gfx_display_colour_text (16, 90, "Condition:", GFX_COL_GREEN_1);
 	gfx_display_text (190, 90, condition_txt[condition]);
 
@@ -791,39 +768,43 @@ void buy_stock (void)
 		return;
 
 	item = &stock_market[hilite_item];
-		
-	if ((item->current_quantity == 0) ||
-	    (cmdr.credits < item->current_price))
+
+	do {
+	  if ((item->current_quantity == 0) ||
+		  (cmdr.credits < item->current_price))
 		return;
 
-	cargo_held = total_cargo();
+	  cargo_held = total_cargo();
 	
-	if ((item->units == TONNES) &&
-		(cargo_held == cmdr.cargo_capacity))
+	  if ((item->units == TONNES) &&
+		  (cargo_held == cmdr.cargo_capacity))
 		return;
 	
-	cmdr.current_cargo[hilite_item]++;
-	item->current_quantity--;
-	cmdr.credits -= item->current_price;	
+	  cmdr.current_cargo[hilite_item]++;
+	  item->current_quantity--;
+	  cmdr.credits -= item->current_price;	
 
-	highlight_stock (hilite_item);
+	  highlight_stock (hilite_item);
+	} while (kbd_ctrl_pressed);
 }
 
 
 void sell_stock (void)
 {
 	struct stock_item *item;
-	
-	if ((!docked) || (cmdr.current_cargo[hilite_item] == 0))
+
+	do {
+	  if ((!docked) || (cmdr.current_cargo[hilite_item] == 0))
 		return;
 
-	item = &stock_market[hilite_item];
+	  item = &stock_market[hilite_item];
 
-	cmdr.current_cargo[hilite_item]--;
-	item->current_quantity++;
-	cmdr.credits += item->current_price;	
+	  cmdr.current_cargo[hilite_item]--;
+	  item->current_quantity++;
+	  cmdr.credits += item->current_price;	
 
-	highlight_stock (hilite_item);
+	  highlight_stock (hilite_item);
+	} while (kbd_ctrl_pressed);
 }
 
 

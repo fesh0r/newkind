@@ -60,7 +60,11 @@ int energy;
 int laser_temp;
 int detonate_bomb;
 int auto_pilot;
+int prefer_window;
+int condition_x, condition_y, condition_r;
+int zoom_x, zoom_y;
 
+int condition = COND_DOCKED;
 
 struct commander saved_cmdr =
 {

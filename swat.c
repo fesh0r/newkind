@@ -53,14 +53,14 @@ int ship_count[NO_OF_SHIPS + 1];  /* many */
 int initial_flags[NO_OF_SHIPS + 1] =
 {
 	0,											// NULL,
-	0,											// missile 
+	FLG_TARGET,									// missile 
 	0,											// coriolis
 	FLG_SLOW | FLG_FLY_TO_PLANET,				// escape
-	FLG_INACTIVE,								// alloy
-	FLG_INACTIVE,								// cargo
-	FLG_INACTIVE,								// boulder
-	FLG_INACTIVE,								// asteroid
-	FLG_INACTIVE,								// rock
+	FLG_INACTIVE | FLG_TARGET,					// alloy
+	FLG_INACTIVE | FLG_TARGET,					// cargo
+	FLG_INACTIVE | FLG_TARGET,					// boulder
+	FLG_INACTIVE | FLG_TARGET,					// asteroid
+	FLG_INACTIVE | FLG_TARGET,					// rock
 	FLG_FLY_TO_PLANET | FLG_SLOW,				// shuttle
 	FLG_FLY_TO_PLANET | FLG_SLOW,				// transporter
 	0,											// cobra3
@@ -69,20 +69,20 @@ int initial_flags[NO_OF_SHIPS + 1] =
 	FLG_SLOW,									// anaconda
 	FLG_SLOW,									// hermit
 	FLG_BOLD | FLG_POLICE,						// viper
-	FLG_BOLD | FLG_ANGRY,						// sidewinder
-	FLG_BOLD | FLG_ANGRY,						// mamba
-	FLG_BOLD | FLG_ANGRY,						// krait
-	FLG_BOLD | FLG_ANGRY,						// adder
-	FLG_BOLD | FLG_ANGRY,						// gecko
-	FLG_BOLD | FLG_ANGRY,						// cobra1
-	FLG_SLOW | FLG_ANGRY,						// worm
-	FLG_BOLD | FLG_ANGRY,						// cobra3
-	FLG_BOLD | FLG_ANGRY,						// asp2
-	FLG_BOLD | FLG_ANGRY,						// python
-	FLG_POLICE,									// fer_de_lance
-	FLG_BOLD | FLG_ANGRY,						// moray
-	FLG_BOLD | FLG_ANGRY,						// thargoid
-	FLG_ANGRY,									// thargon
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// sidewinder
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// mamba
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// krait
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// adder
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// gecko
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// cobra1
+	FLG_SLOW | FLG_ANGRY | FLG_TARGET,			// worm
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// cobra3
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// asp2
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// python
+	FLG_POLICE,								    // fer_de_lance
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// moray
+	FLG_BOLD | FLG_ANGRY | FLG_TARGET,			// thargoid
+	FLG_ANGRY | FLG_TARGET,						// thargon
 	FLG_ANGRY,									// constrictor
 	FLG_POLICE | FLG_CLOAKED,					// cougar
 	0											// dodec
@@ -311,9 +311,11 @@ void make_angry (int un)
 	type = universe[un].type;
 	flags = universe[un].flags;
 
-	if (flags & FLG_INACTIVE)
-		return;
-	
+	if (flags & FLG_INACTIVE) {
+	  universe[un].flags |= FLG_TACTICAL;
+	  return;
+	}
+
 	if ((type == SHIP_CORIOLIS) || (type == SHIP_DODEC))
 	{
 		universe[un].flags |= FLG_ANGRY;
@@ -324,7 +326,7 @@ void make_angry (int un)
 	{
 		universe[un].rotx = 4;
 		universe[un].acceleration = 2;
-		universe[un].flags |= FLG_ANGRY;
+		universe[un].flags |= FLG_ANGRY | FLG_TACTICAL;
 	}
 }
 
@@ -459,7 +461,7 @@ void fire_missile (void)
 	ns = &universe[newship];
 	
 	ns->velocity = flight_speed * 2;
-	ns->flags = FLG_ANGRY;
+	ns->flags |= FLG_TACTICAL;
 	ns->target = missile_target;
 
 	if (universe[missile_target].type > SHIP_ROCK)
@@ -573,7 +575,13 @@ void missile_tactics (int un)
 			activate_ecm (0);
 			return;
 		}
-	}	
+	}
+
+	if ((rand255() < 16) &&
+		(ship_count[SHIP_CORIOLIS] || ship_count[SHIP_DODEC])) {
+	  activate_ecm(0);
+	  return;
+	}
 
 	nvec = unit_vector(&vec);
 	direction = vector_dot_product (&nvec, &missile->rotmat[2]); 
@@ -678,7 +686,7 @@ void tactics (int un)
 		if (rand255() > 200)
 		{
 			launch_enemy (un, SHIP_SIDEWINDER + (rand255() & 3), FLG_ANGRY | FLG_HAS_ECM, 113);
-			ship->flags |= FLG_INACTIVE;
+			ship->flags |= FLG_INACTIVE | FLG_TARGET;
 		}
 
 		return;
@@ -690,7 +698,7 @@ void tactics (int un)
 
 	if ((type == SHIP_THARGLET) && (ship_count[SHIP_THARGOID] == 0))
 	{
-		ship->flags = 0;
+		ship->flags &= FLG_TARGET | FLG_TACTICAL;
 		ship->velocity /= 2;
 		return;
 	}
@@ -765,11 +773,13 @@ void tactics (int un)
 			(ship->missiles >= (rand255() & 31)))
 		{
 			ship->missiles--;
+			ship->flags |= FLG_TACTICAL;
 			if (type == SHIP_THARGOID)
 				launch_enemy (un, SHIP_THARGLET, FLG_ANGRY, ship->bravery);
 			else
 			{
 				launch_enemy (un, SHIP_MISSILE, FLG_ANGRY, 126);
+				ship->flags |= FLG_HOSTILE;
 				info_message ("INCOMING MISSILE");
 			}
 			return;
@@ -783,7 +793,7 @@ void tactics (int un)
 		 (ship_list[type]->laser_strength != 0))
 	{
 		if (direction <= -0.917)
-			ship->flags |= FLG_FIRING | FLG_HOSTILE;		
+			ship->flags |= FLG_FIRING | FLG_HOSTILE | FLG_TACTICAL;		
 
 		if (direction <= -0.972)
 		{
@@ -986,11 +996,13 @@ void create_thargoid (void)
 	newship = create_other_ship (SHIP_THARGOID);
 	if (newship != -1)
 	{
-		universe[newship].flags = FLG_ANGRY | FLG_HAS_ECM;
+		universe[newship].flags = FLG_ANGRY | FLG_HAS_ECM | FLG_TARGET;
 		universe[newship].bravery = 113;
 
 		if (rand255() > 64)
-			launch_enemy (newship, SHIP_THARGLET, FLG_ANGRY | FLG_HAS_ECM, 96);
+			launch_enemy (newship, SHIP_THARGLET, FLG_ANGRY | FLG_HAS_ECM,
+						  96);
+		in_battle = 1;
 	}	
 }
 
@@ -1036,8 +1048,8 @@ void create_trader (void)
 		if (rnd & 1)
 			universe[newship].flags |= FLG_HAS_ECM;
 
-//		if (rnd & 2)
-//			universe[newship].flags |= FLG_ANGRY; 
+		if (rnd > 200)
+			universe[newship].flags |= FLG_ANGRY | FLG_TARGET; 
 	}
 }
 
@@ -1064,12 +1076,24 @@ void create_lone_hunter (void)
 
 	if (newship != -1)
 	{
-		universe[newship].flags = FLG_ANGRY;
+		// universe[newship].flags = FLG_ANGRY;
 		if ((rand255() > 200) || (type == SHIP_CONSTRICTOR))
 			universe[newship].flags |= FLG_HAS_ECM;
 		
 		universe[newship].bravery = ((rand255() * 2) | 64) & 127;
-		in_battle = 1;  
+		if (type == SHIP_FER_DE_LANCE) {
+		  if (rand255() > 160)
+			universe[newship].flags |= FLG_ANGRY | FLG_TARGET;
+		  else {
+			universe[newship].rotmat[2].z = -1.0;
+			universe[newship].rotz = rand255() & 7;		
+			rnd = rand255();
+			universe[newship].velocity = (rnd & 31) | 16;
+		  }
+		}
+			
+		if (universe[newship].flags & FLG_ANGRY)
+		  in_battle = 1;  
 	}	
 }
 
@@ -1121,7 +1145,7 @@ void check_for_cops (void)
 	
 	if (newship != -1)
 	{
-		universe[newship].flags = FLG_ANGRY;
+		universe[newship].flags |= FLG_ANGRY;
 		if (rand255() > 245)
 			universe[newship].flags |= FLG_HAS_ECM;
 		
@@ -1173,7 +1197,7 @@ void check_for_others (void)
 		newship = add_new_ship (type, x, y, z, rotmat, 0, 0);
 		if (newship != -1)
 		{
-			universe[newship].flags = FLG_ANGRY;
+			universe[newship].flags |= FLG_ANGRY | FLG_TARGET;
 			if (rand255() > 245)
 				universe[newship].flags |= FLG_HAS_ECM;
 		

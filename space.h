@@ -87,6 +87,8 @@ void jump_warp (void);
 void launch_player (void);
 
 void engage_docking_computer (void);
+void display_condition(void);
+void update_condition(void);
 
 #endif
 

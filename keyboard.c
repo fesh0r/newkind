@@ -34,6 +34,7 @@ int kbd_F11_pressed;
 int kbd_F12_pressed;
 int kbd_y_pressed;
 int kbd_n_pressed;
+int kbd_zoom_pressed;
 int kbd_fire_pressed;
 int kbd_ecm_pressed;
 int kbd_energy_bomb_pressed;
@@ -51,6 +52,7 @@ int kbd_unarm_missile_pressed;
 int kbd_pause_pressed;
 int kbd_resume_pressed;
 int kbd_inc_speed_pressed;
+int kbd_i_pressed;
 int kbd_dec_speed_pressed;
 int kbd_up_pressed;
 int kbd_down_pressed;
@@ -60,6 +62,7 @@ int kbd_enter_pressed;
 int kbd_backspace_pressed;
 int kbd_space_pressed;
 
+static char old_key[KEY_MAX];
 
 int kbd_keyboard_startup (void)
 {
@@ -74,7 +77,16 @@ int kbd_keyboard_shutdown (void)
 
 void kbd_poll_keyboard (void)
 {
+	int i;
 	poll_keyboard();
+	for (i = 0; i < KEY_MAX; i++) {
+	  if (!key[i])
+	    continue;
+	  key[i] = 1;
+	  if (key[i] && old_key[i])
+	    key[i] |= 2;
+	}
+	memcpy(old_key, key, KEY_MAX);
 
 	kbd_F1_pressed = key[KEY_F1];
 	kbd_F2_pressed = key[KEY_F2];
@@ -91,6 +103,7 @@ void kbd_poll_keyboard (void)
 
 	kbd_y_pressed = key[KEY_Y];
 	kbd_n_pressed = key[KEY_N];
+	kbd_zoom_pressed = key[KEY_Z];
 
     kbd_fire_pressed = key[KEY_A];
 	kbd_ecm_pressed = key[KEY_E];
@@ -104,6 +117,8 @@ void kbd_poll_keyboard (void)
 	kbd_d_pressed = key[KEY_D];
 	kbd_origin_pressed = key[KEY_O];
 	kbd_find_pressed = key[KEY_F];
+
+	kbd_i_pressed = key[KEY_I];
 
 	kbd_fire_missile_pressed = key[KEY_M];
 	kbd_target_missile_pressed = key[KEY_T];

@@ -46,6 +46,7 @@ void write_config_file (void)
 	fprintf (fp, "%d\t\t# Instant dock: 0 = off, 1 = on\n", instant_dock);
 	
 	fprintf (fp, "newscan.cfg\t# Name of scanner config file to use.\n");
+	fprintf (fp, "%d\t\t# Run in a window: 0 = off, 1 = on\n", prefer_window);
 
 	fclose (fp);
 }
@@ -113,6 +114,14 @@ void read_scanner_config_file (char *filename)
 	sscanf (str, "%d,%d", &compass_centre_x, &compass_centre_y);
 	compass_centre_y += 385;
 	
+	read_cfg_line (str, sizeof(str), fp);
+	sscanf (str, "%d,%d,%d", &condition_x, &condition_y, &condition_r);
+	condition_y += 385;
+
+	read_cfg_line (str, sizeof(str), fp);
+	sscanf (str, "%d,%d", &zoom_x, &zoom_y);
+	zoom_y += 385;
+
 	fclose (fp);
 }
 
@@ -149,6 +158,9 @@ void read_config_file (void)
 
 	read_cfg_line (str, sizeof(str), fp);
 	read_scanner_config_file (str);
+
+	read_cfg_line (str, sizeof(str), fp);
+	sscanf (str, "%d", &prefer_window);
 		
 	fclose (fp);
 }

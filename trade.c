@@ -162,6 +162,7 @@ void scoop_item (int un)
 	if ((cmdr.fuel_scoop == 0) || (universe[un].location.y >= 0) ||
 		(total_cargo() == cmdr.cargo_capacity))
 	{
+		universe[un].flags |= FLG_TARGET;
 		explode_object (un);
 		damage_ship (128 + (universe[un].energy / 2), universe[un].location.z > 0);
 		return;

@@ -587,7 +587,8 @@ void update_universe (void)
 		{
 			if (universe[i].flags & FLG_REMOVE)
 			{
-				if (type == SHIP_VIPER)
+				if (type == SHIP_VIPER ||
+				    !(universe[i].flags & FLG_TARGET))
 					cmdr.legal_status |= 64;
 			
 				bounty = ship_list[type]->bounty;
@@ -595,7 +596,7 @@ void update_universe (void)
 				if ((bounty != 0) && (!witchspace))
 				{
 					cmdr.credits += bounty;
-					sprintf (str, "%d.%d CR", cmdr.credits / 10, cmdr.credits % 10);
+					sprintf (str, "Bounty: %d.%d CR", bounty / 10, bounty % 10);
 					info_message (str);
 				}
 				
@@ -701,9 +702,9 @@ void update_scanner (void)
 			(universe[i].flags & FLG_CLOAKED))
 			continue;
 	
-		x = universe[i].location.x / 256;
-		y = universe[i].location.y / 256;
-		z = universe[i].location.z / 256;
+		x = universe[i].location.x * scanner_zoom / 256;
+		y = universe[i].location.y * scanner_zoom / 256;
+		z = universe[i].location.z * scanner_zoom / 256;
 
 		x1 = x;
 		y1 = -z / 4;
@@ -962,9 +963,19 @@ void display_missiles (void)
 }
 
 
+
+void display_condition(void)
+{
+  static const int cc[] = { GFX_COL_BLACK, GFX_COL_GREEN_1, GFX_COL_YELLOW_1,
+			    GFX_COL_RED, GFX_COL_RED };
+  int c = cc[condition];
+  if (condition == COND_ALERT && (mcount & 4))
+    c = GFX_COL_BLACK;
+  gfx_draw_filled_circle(condition_x, condition_y, condition_r, c);
+}
+
 void update_console (void)
 {
-	gfx_set_clip_region (0, 0, 512, 512);
 	gfx_draw_scanner();
 	
 	display_speed();
@@ -977,18 +988,30 @@ void update_console (void)
 	display_laser_temp();
 	display_fuel();
 	display_missiles();
+	update_condition();
 	
-	if (docked)
-		return;
+	if (docked) {
+	  gfx_set_clip_region (0, 0, 512, 512);
+	  return;
+	}
 
 	update_scanner();
 	update_compass();
+	display_condition();
+
+	{
+	  char buf[5];
+	  sprintf(buf, "x%d", scanner_zoom);
+	  gfx_display_text(zoom_x, zoom_y, buf);
+	}
 
 	if (ship_count[SHIP_CORIOLIS] || ship_count[SHIP_DODEC])
 		gfx_draw_sprite (IMG_BIG_S, 387, 490);
 
 	if (ecm_active)
 		gfx_draw_sprite (IMG_BIG_E, 115, 490);
+
+	gfx_set_clip_region (0, 0, 512, 512);
 }
 
 void increase_flight_roll (void)
@@ -1025,7 +1048,13 @@ void start_hyperspace (void)
 		
 	hyper_distance = calc_distance_to_planet (docked_planet, hyperspace_planet);
 
-	if ((hyper_distance == 0) || (hyper_distance > cmdr.fuel))
+	if ((docked_planet.a == hyperspace_planet.a &&
+	     docked_planet.b == hyperspace_planet.b &&
+	     docked_planet.c == hyperspace_planet.c &&
+	     docked_planet.d == hyperspace_planet.d &&
+	     docked_planet.e == hyperspace_planet.e &&
+	     docked_planet.f == hyperspace_planet.f) ||
+	    (hyper_distance > cmdr.fuel))
 		return;
 
 	destination_planet = hyperspace_planet;
@@ -1274,6 +1303,8 @@ void launch_player (void)
 	generate_landscape(docked_planet.a * 251 + docked_planet.b);
 	set_init_matrix (rotmat);
 	add_new_ship (SHIP_PLANET, 0, 0, 65536, rotmat, 0, 0);
+	identify = 0;
+	scanner_zoom = 1;
 
 	rotmat[2].x = -rotmat[2].x;
 	rotmat[2].y = -rotmat[2].y;
@@ -1295,9 +1326,40 @@ void engage_docking_computer (void)
 {
 	if (ship_count[SHIP_CORIOLIS] || ship_count[SHIP_DODEC])
 	{
-		snd_play_sample (SND_DOCK);					
+		snd_play_sample (SND_DOCK);
 		dock_player();
 		current_screen = SCR_BREAK_PATTERN;
 	}
 }
 
+
+void update_condition(void)
+{
+  if (docked)
+    condition = COND_DOCKED;
+  else if (energy < 50 || myship.altitude < 32 || myship.cabtemp > 224)
+    condition = COND_ALERT;
+  else if (energy < 128 || myship.altitude < 64 || myship.cabtemp > 192)
+    condition = COND_RED;
+  else {
+    int i;
+    condition = COND_GREEN;
+    if (myship.altitude < 128 || myship.cabtemp >= 128)
+      condition = COND_YELLOW;
+    for (i = 0; i < MAX_UNIV_OBJECTS; i++) {
+      struct univ_object *un = &universe[i];
+      if (un->type <= 0)
+	continue;
+      if (un->flags & FLG_HOSTILE) {
+	condition = COND_RED;
+	break;
+      }
+      if (condition == COND_GREEN && 
+	  un->type != SHIP_ASTEROID && un->type != SHIP_CARGO &&
+	  un->type != SHIP_ALLOY && un->type != SHIP_ROCK &&
+	  un->type != SHIP_BOULDER && un->type != SHIP_ESCAPE_CAPSULE &&
+	  un->type != SHIP_CORIOLIS && un->type != SHIP_DODEC)
+	condition = COND_YELLOW;
+    }
+  }
+}

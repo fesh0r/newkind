@@ -83,7 +83,9 @@ int gfx_graphics_startup (void)
 #endif
 
 #else
-	rv = set_gfx_mode(GFX_AUTODETECT, 800, 600, 0, 0);
+	rv = set_gfx_mode(prefer_window ?
+			    GFX_AUTODETECT_WINDOWED : GFX_AUTODETECT,
+			  800, 600, 0, 0);
 #endif
 
 	if (rv != 0)
@@ -584,7 +586,11 @@ void gfx_display_pretty_text (int tx, int ty, int bx, int by, char *txt)
 
 void gfx_draw_scanner (void)
 {
-	blit (scanner_image, gfx_screen, 0, 0, GFX_X_OFFSET, 385+GFX_Y_OFFSET, scanner_image->w, scanner_image->h);
+	set_clip(gfx_screen, GFX_X_OFFSET, 385 + GFX_Y_OFFSET,
+		 GFX_X_OFFSET + scanner_image->w,
+		 GFX_Y_OFFSET + scanner_image->h + 385);
+	blit (scanner_image, gfx_screen, 0, 0, GFX_X_OFFSET,
+	      385+GFX_Y_OFFSET, scanner_image->w, scanner_image->h);
 }
 
 void gfx_set_clip_region (int tx, int ty, int bx, int by)
