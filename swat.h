@@ -26,6 +26,7 @@ extern int in_battle;
 
 void reset_weapons (void);
 void tactics (int un);
+int create_other_ship (int type);
 int in_target (int type, double x, double y, double z);
 void check_target (int un, struct univ_object *flip);
 void check_missiles (int un);
