@@ -321,7 +321,12 @@ void make_angry (int un)
 		universe[un].flags |= FLG_ANGRY;
 		return;
 	}
-	
+
+	if (!(universe[un].flags & FLG_TARGET) &&
+	    (universe[1].type == SHIP_CORIOLIS ||
+	     universe[1].type == SHIP_DODEC))
+	  universe[1].flags |= FLG_ANGRY;	  
+
 	if (type > SHIP_ROCK)
 	{
 		universe[un].rotx = 4;
@@ -713,7 +718,7 @@ void tactics (int un)
 	{
 		if (cmdr.legal_status >= 64)
 		{
-			flags |= FLG_ANGRY;
+			flags |= FLG_ANGRY | FLG_TARGET;
 			ship->flags = flags;
 		}
 	}
@@ -1145,7 +1150,7 @@ void check_for_cops (void)
 	
 	if (newship != -1)
 	{
-		universe[newship].flags |= FLG_ANGRY;
+		universe[newship].flags |= FLG_ANGRY | FLG_TARGET;
 		if (rand255() > 245)
 			universe[newship].flags |= FLG_HAS_ECM;
 		
