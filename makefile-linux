@@ -20,7 +20,8 @@
 
 CC = gcc
 LIBS = `allegro-config --libs`
-CFLAGS = -O3 -mpentium -Wall -fomit-frame-pointer -funroll-loops
+# CFLAGS = -O3 -mpentium -Wall -fomit-frame-pointer -funroll-loops
+CFLAGS = -O3 -mpentium -Wall -g -funroll-loops
 OBJS = alg_gfx.o alg_main.o docked.o elite.o \
 intro.o planet.o shipdata.o shipface.o sound.o space.o \
 swat.o threed.o vector.o random.o trade.o options.o \
