@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "elite.h"
+#include "keyboard.h"
 #include "gfx.h"
 #include "docked.h"
 #include "intro.h"
@@ -230,6 +231,9 @@ int is_docking (int sn)
 	struct vector vec;
 	double fz;
 	double ux;
+
+	if (universe[sn].flags & FLG_ANGRY)
+	  return (0);
 
 	if (auto_pilot)		// Don't want it to kill anyone!
 		return 1;
@@ -587,8 +591,7 @@ void update_universe (void)
 		{
 			if (universe[i].flags & FLG_REMOVE)
 			{
-				if (type == SHIP_VIPER ||
-				    !(universe[i].flags & FLG_TARGET))
+				if (!(universe[i].flags & FLG_TARGET))
 					cmdr.legal_status |= 64;
 			
 				bounty = ship_list[type]->bounty;
@@ -1248,24 +1251,26 @@ void jump_warp (void)
 	int i;
 	int type;
 	int jump;
-	
-	for (i = 0; i < MAX_UNIV_OBJECTS; i++)
-	{
-		type = universe[i].type;
-		
-		if ((type > 0) && (type != SHIP_ASTEROID) && (type != SHIP_CARGO) &&
-			(type != SHIP_ALLOY) && (type != SHIP_ROCK) &&
-			(type != SHIP_BOULDER) && (type != SHIP_ESCAPE_CAPSULE))
-		{
-			info_message ("Mass Locked");
-			return;
-		}
-	}
 
-	if ((universe[0].distance < 75001) || (universe[1].distance < 75001))
-	{
-		info_message ("Mass Locked");
-		return;
+	if (!kbd_ctrl_pressed) {
+	  for (i = 0; i < MAX_UNIV_OBJECTS; i++)
+	  {
+	    type = universe[i].type;
+		
+	    if ((type > 0) && (type != SHIP_ASTEROID) && (type != SHIP_CARGO) &&
+		(type != SHIP_ALLOY) && (type != SHIP_ROCK) &&
+		(type != SHIP_BOULDER) && (type != SHIP_ESCAPE_CAPSULE))
+	    {
+	      info_message ("Mass Locked");
+	      return;
+	    }
+	  }
+	  if ((universe[0].distance < 75001) || (universe[1].distance < 75001))
+	  {
+	    info_message ("Mass Locked");
+	    return;
+	  }
+
 	}
 
 
@@ -1274,7 +1279,7 @@ void jump_warp (void)
 	else
 		jump = universe[1].distance - 75000;	
 
-	if (jump > 1024)
+	if (jump > 1024 || kbd_ctrl_pressed)
 		jump = 1024;
 	
 	for (i = 0; i < MAX_UNIV_OBJECTS; i++)
@@ -1284,8 +1289,10 @@ void jump_warp (void)
 	}
 
 	warp_stars = 1;
-	mcount &= 63;
-	in_battle = 0;
+	if (!kbd_ctrl_pressed) {
+	  mcount &= 63;
+	  in_battle = 0;
+	}
 }
 
 
