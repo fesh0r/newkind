@@ -1048,7 +1048,7 @@ void create_trader (void)
 		if (rnd & 1)
 			universe[newship].flags |= FLG_HAS_ECM;
 
-		if (rnd > 200)
+		if (rnd > (type == SHIP_ANACONDA ? 250 : 220))
 			universe[newship].flags |= FLG_ANGRY | FLG_TARGET; 
 	}
 }
