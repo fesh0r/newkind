@@ -65,6 +65,7 @@ int game_paused;
 int have_joystick;
 int identify;
 int scanner_zoom = 1;
+int remap_keys;
 
 int find_input;
 char find_name[20];
@@ -116,7 +117,7 @@ void initialise_game(void)
 void finish_game (void)
 {
 	finish = 1;
-	game_over = 1;
+	game_over = 2;
 }
 
 
@@ -260,6 +261,52 @@ void draw_laser_sights(void)
 }
 
 
+static void roll_left(void)
+{
+  if (flight_roll < 0)
+    flight_roll = 0;
+  else
+  {
+    increase_flight_roll();
+    increase_flight_roll();
+    rolling = 1;
+  }
+}
+
+static void roll_right(void)
+{
+  if (flight_roll > 0)
+    flight_roll = 0;
+  else
+  {
+    decrease_flight_roll();
+    decrease_flight_roll();
+    rolling = 1;
+  }
+}
+
+static void climb(void)
+{
+  if (flight_climb < 0)
+    flight_climb = 0;
+  else
+  {
+    increase_flight_climb();
+  }
+  climbing = 1;
+}
+
+static void dive(void)
+{
+  if (flight_climb > 0)
+    flight_climb = 0;
+  else
+  {
+    decrease_flight_climb();
+  }
+  climbing = 1;
+}
+
 void arrow_right (void)
 {
 	switch (current_screen)
@@ -278,18 +325,17 @@ void arrow_right (void)
 			break;
 
 		case SCR_FRONT_VIEW:
+		  roll_right();
+		  break;
 		case SCR_REAR_VIEW:
+		  if (remap_keys) roll_left(); else roll_right();
+		  break;
 		case SCR_RIGHT_VIEW:
+		  if (remap_keys) climb(); else roll_right();
+		  break;
 		case SCR_LEFT_VIEW:
-			if (flight_roll > 0)
-				flight_roll = 0;
-			else
-			{
-				decrease_flight_roll();
-				decrease_flight_roll();
-				rolling = 1;
-			}
-			break;
+		  if (remap_keys) dive(); else roll_right();
+		  break;
 	}
 }
 
@@ -312,18 +358,17 @@ void arrow_left (void)
 			break;
 
 		case SCR_FRONT_VIEW:
+		  roll_left();
+		  break;
 		case SCR_REAR_VIEW:
+		  if (remap_keys) roll_right(); else roll_left();
+		  break;
 		case SCR_RIGHT_VIEW:
+		  if (remap_keys) dive(); else roll_left();
+		  break;
 		case SCR_LEFT_VIEW:
-			if (flight_roll < 0)
-				flight_roll = 0;
-			else
-			{
-				increase_flight_roll();
-				increase_flight_roll();
-				rolling = 1;
-			}
-			break;
+		  if (remap_keys) climb(); else roll_left();
+		  break;
 	}
 }
 
@@ -354,17 +399,17 @@ void arrow_up (void)
 			break;
 
 		case SCR_FRONT_VIEW:
+		  dive();
+		  break;
 		case SCR_REAR_VIEW:
+		  if (remap_keys) climb(); else dive();
+		  break;
 		case SCR_RIGHT_VIEW:
+		  if (remap_keys) roll_right(); else dive();
+		  break;
 		case SCR_LEFT_VIEW:
-			if (flight_climb > 0)
-				flight_climb = 0;
-			else
-			{
-				decrease_flight_climb();
-			}
-			climbing = 1;
-			break;
+		  if (remap_keys) roll_left(); else dive();
+		  break;
 	}
 }
 
@@ -396,17 +441,17 @@ void arrow_down (void)
 			break;
 
 		case SCR_FRONT_VIEW:
+		  climb();
+		  break;
 		case SCR_REAR_VIEW:
+		  if (remap_keys) dive(); else climb();
+		  break;
 		case SCR_RIGHT_VIEW:
+		  if (remap_keys) roll_left(); else climb();
+		  break;
 		case SCR_LEFT_VIEW:
-			if (flight_climb < 0)
-				flight_climb = 0;
-			else
-			{
-				increase_flight_climb();
-			}
-			climbing = 1;
-			break;
+		  if (remap_keys) roll_right(); else climb();
+		  break;
 
 	}
 }
@@ -438,6 +483,9 @@ void y_pressed (void)
 		case SCR_QUIT:
 			finish_game();
 			break;
+		case SCR_RESTART:
+		  game_over = 2;
+		  break;
 	}
 }
 
@@ -447,6 +495,7 @@ void n_pressed (void)
 	switch (current_screen)
 	{
 		case SCR_QUIT:
+		case SCR_RESTART:
 			if (docked)
 				display_commander_status();
 			else
@@ -688,6 +737,51 @@ void run_escape_sequence (void)
 	abandon_ship();
 }
 
+static int cheat_arg = 0;
+static void check_cheat_keys(void)
+{
+  int i;
+
+  if (!kbd_ctrl_pressed)
+    return;
+
+  for (i = 0; i < 10; i++) {
+    if (old_key[KEY_0 + i] == 1) {
+      cheat_arg = cheat_arg * 10 + i;
+      goto ok;
+    }
+  }
+
+  if (old_key[KEY_C] == 1)
+    goto done;
+
+  if (docked)
+    return;
+
+  if (old_key[KEY_S] == 1) {
+    if (cheat_arg < NO_OF_SHIPS) {
+      int un = create_other_ship(cheat_arg);
+      if (un != -1)
+	universe[un].flags |= FLG_TARGET;
+      goto done;
+    }
+  }
+
+  if (old_key[KEY_D] == 1) {
+    game_paused = 0;
+    snd_play_sample (SND_DOCK);					
+    dock_player();
+    current_screen = SCR_BREAK_PATTERN;
+    goto done;
+  }
+
+  return;
+done:
+  cheat_arg = 0;
+ok:
+  snd_play_sample(SND_BEEP);
+  return;
+}
 
 void handle_flight_keys (void)
 {
@@ -733,6 +827,8 @@ void handle_flight_keys (void)
 	{
 		if (kbd_resume_pressed)
 			game_paused = 0;
+		else
+		  check_cheat_keys();
 		return;
 	}
 		
@@ -885,10 +981,14 @@ void handle_flight_keys (void)
 	{
 		if (!docked && cmdr.docking_computer)
 		{
-			if (instant_dock)
-				engage_docking_computer();
-			else
-				engage_auto_pilot();
+		  if ((universe[1].type == SHIP_CORIOLIS ||
+		       universe[1].type == SHIP_DODEC) &&
+		      (universe[1].flags & FLG_ANGRY))
+		    info_message("Docking permission refused");
+		  else	if (instant_dock)
+		    engage_docking_computer();
+		  else
+		    engage_auto_pilot();
 		}
 	}
 
@@ -926,8 +1026,10 @@ void handle_flight_keys (void)
 	if (kbd_origin_pressed)
 		o_pressed();
 
-	if (kbd_pause_pressed)
+	if (kbd_pause_pressed) {
+	        cheat_arg = 0;
 		game_paused = 1;
+	}
 	
 	if (kbd_target_missile_pressed)
 	{
@@ -974,7 +1076,7 @@ void handle_flight_keys (void)
 	if (kbd_enter_pressed)
 		return_pressed();
 
-	if (kbd_energy_bomb_pressed)
+	if (kbd_energy_bomb_pressed && kbd_ctrl_pressed)
 	{
 		if ((!docked) && (cmdr.energy_bomb))
 		{
@@ -983,7 +1085,7 @@ void handle_flight_keys (void)
 		}
 	}		
 
-	if (kbd_escape_pressed)
+	if (kbd_escape_pressed && kbd_ctrl_pressed)
 	{
 		if ((!docked) && (cmdr.escape_pod) && (!witchspace))
 			run_escape_sequence();
@@ -1447,7 +1549,7 @@ int main()
 			}
 		}
 
-		if (!finish)		
+		if (game_over < 2)		
 			run_game_over_screen();
 	}
 
