@@ -59,6 +59,7 @@ extern int kbd_right_pressed;
 extern int kbd_enter_pressed;
 extern int kbd_backspace_pressed;
 extern int kbd_space_pressed;
+extern char old_key[];
 
 
 int kbd_keyboard_startup (void);

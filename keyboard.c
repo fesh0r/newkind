@@ -62,7 +62,7 @@ int kbd_enter_pressed;
 int kbd_backspace_pressed;
 int kbd_space_pressed;
 
-static char old_key[KEY_MAX];
+char old_key[KEY_MAX];
 
 int kbd_keyboard_startup (void)
 {
