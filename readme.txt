@@ -110,7 +110,7 @@ Release 1.0 - Changes since Beta 3.0
 
 - Fixed movement of crosshairs on chart screens so that they are clipped properly.
 
-- Added explosion, cargo cannisters and alloys to the game over screen.
+- Added explosion, cargo canisters and alloys to the game over screen.
 
 - Added escape capsule sequence.
 
@@ -157,7 +157,7 @@ Beta 3.0 - Changes since Beta 2.1
 
 - Attacked ships can now release escape capsules.
 
-- Objects other than cargo cannisters can now be scooped.
+- Objects other than cargo canisters can now be scooped.
 
 - Corrected condition indicator code.  Was previously showing yellow even after danger had passed.
 
